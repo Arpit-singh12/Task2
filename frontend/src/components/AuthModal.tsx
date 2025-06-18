@@ -3,6 +3,7 @@ import { X, User, Star, Sparkles, Crown } from 'lucide-react';
 import { User as UserType } from '../types';
 import { useApp } from '../contexts/AppContext';
 import { mockUsers } from '../data/mockData';
+import API from '../api/axios';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -17,16 +18,40 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const celebrities = mockUsers.filter(user => user.role === 'celebrity');
   const publicUsers = mockUsers.filter(user => user.role === 'public');
 
+   // getting mock user details.....for login..
+
+  // const handleLogin = async (user: UserType) => {
+  //   setIsLoading(true);
+    
+  //   // Simulate authentication delay
+  //   await new Promise(resolve => setTimeout(resolve, 1500));
+    
+  //   dispatch({ type: 'LOGIN', payload: user });
+  //   setIsLoading(false);
+  //   onClose();
+  // };
+
+  // getting real mock login for all user wihtout with same pass..
   const handleLogin = async (user: UserType) => {
-    setIsLoading(true);
-    
-    // Simulate authentication delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    dispatch({ type: 'LOGIN', payload: user });
-    setIsLoading(false);
+  setIsLoading(true);
+
+  try {
+    const res = await API.post('/auth/login', {
+      username: user.username,
+      password: '123456', // or 'defaultpass' — your hardcoded dummy password
+    });
+
+    const { token, user: loggedInUser } = res.data;
+    localStorage.setItem('token', token);
+    dispatch({ type: 'LOGIN', payload: loggedInUser });
     onClose();
-  };
+  } catch (error) {
+    console.error('Login failed:', error);
+    alert('Login failed. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   if (!isOpen) return null;
 
