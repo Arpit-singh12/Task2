@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { createClient } from 'redis';
 import authRoutes from './routes/auth.routes';
+import feedRoutes from './routes/feed.routes';
 
 dotenv.config();
 
@@ -30,11 +31,16 @@ app.get('/', (req, res) => {
     res.send('Backend is running at http://localhost:5000');
 });
 
+
 // getting auth routes in action...
 app.use('/api/auth', authRoutes);
 
-//websocket connection
 
+// routes for the social celeb feed...
+app.use('/api/feed', feedRoutes);
+
+
+//websocket connection
 io.on('connection', (socket) => {
     console.log('New client connected');
 
@@ -50,7 +56,6 @@ io.on('connection', (socket) => {
 });
 
 // Redis subscription
-
 redis.subscribe(REDIS_CHANNEL, (message) => {
     const data = JSON.parse(message);
     const { followers, notification} = data;
@@ -61,7 +66,6 @@ redis.subscribe(REDIS_CHANNEL, (message) => {
 });
 
 // MongoDB connection
-
 mongoose
     .connect(MONGO_URI)
     .then(() => {
