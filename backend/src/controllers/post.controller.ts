@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import Post from '../models/Post';
+import User from '../models/User';
 
+
+// Create a post to the backend....
 export const createPost = async (req: Request, res: Response) => {
     const { content, image } = req.body;
     const user = (req as any).user;
@@ -10,7 +13,7 @@ export const createPost = async (req: Request, res: Response) => {
         return;
     }
 
-    // Create the actual post using Post schema...
+    // Create the actual post using Post schema to the mongodb...
 
     try {
         const newPost = await Post.create({
@@ -50,3 +53,36 @@ export const createPost = async (req: Request, res: Response) => {
     }
 };
  
+export const getOwnPosts = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+
+  try {
+    const posts = await Post.find({ authorId: user.id })
+      .sort({ timestamp: -1 });
+
+    const formatted = posts.map(p => ({
+      id: p._id,
+      authorId: user.id,
+      author: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        role: user.role,
+        verified: user.verified,
+        bio: user.bio
+      },
+      content: p.content,
+      image: p.image,
+      timestamp: p.timestamp,
+      likes: p.likes,
+      comments: p.comments,
+      isLiked: false
+    }));
+
+    res.json({ posts: formatted });
+  } catch (err) {
+    console.error('Failed to load own posts:', err);
+    res.status(500).json({ message: 'Failed to load your posts' });
+  }
+};
