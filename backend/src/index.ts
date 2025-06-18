@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import { createClient } from 'redis';
 import authRoutes from './routes/auth.routes';
 import feedRoutes from './routes/feed.routes';
+import postRoutes from './routes/post.routes';
 
 dotenv.config();
 
@@ -35,9 +36,13 @@ app.get('/', (req, res) => {
 // getting auth routes in action...
 app.use('/api/auth', authRoutes);
 
+// route for creating post...
+app.use('/api/posts', postRoutes);
 
-// routes for the social celeb feed...
+// routes for the stored social celeb feed...
 app.use('/api/feed', feedRoutes);
+
+
 
 
 //websocket connection

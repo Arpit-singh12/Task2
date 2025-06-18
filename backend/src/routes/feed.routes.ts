@@ -4,7 +4,7 @@ import { getFeed } from '../controllers/feed.controller';
 
 const router = express.Router();
 
-// Routes for feed.....
+// Routes for stored feed.....
 router.get('/', authenticate, getFeed);
 
 export default router;
