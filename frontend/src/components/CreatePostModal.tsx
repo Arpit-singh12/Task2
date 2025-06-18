@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Image, Smile } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
-import { Post } from '../types';
+import API from '../api/axios';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -11,7 +11,8 @@ interface CreatePostModalProps {
 export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   const { state, dispatch } = useApp();
   const [content, setContent] = useState('');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setImage] = useState<string | null>(null);
+  const [customImageURL, setCustomImageURL] = useState('');
   const [isPosting, setIsPosting] = useState(false);
 
   const { user } = state.auth;
@@ -24,39 +25,35 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   ];
 
   const handlePost = async () => {
-    if (!content.trim() || !user) return;
+    if (!content.trim()) return;
+
+    const image = selectedImage || customImageURL || undefined;
 
     setIsPosting(true);
+    try {
+      const res = await API.post('/posts', {
+        content,
+        image,
+      });
 
-    // Simulate posting delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const newPost: Post = {
-      id: `post-${Date.now()}-${Math.random()}`,
-      authorId: user.id,
-      author: user,
-      content: content.trim(),
-      image: selectedImage || undefined,
-      timestamp: Date.now(),
-      likes: 0,
-      comments: 0,
-      isLiked: false,
-    };
-
-    dispatch({ type: 'ADD_POST', payload: newPost });
-
-    // Reset form
-    setContent('');
-    setSelectedImage(null);
-    setIsPosting(false);
-    onClose();
+      dispatch({ type: 'ADD_POST', payload: res.data });
+      setContent('');
+      setImage(null);
+      setCustomImageURL('');
+      onClose();
+    } catch (error) {
+      console.error('Failed to create post:', error);
+      alert('Post creation failed!');
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   if (!isOpen || !user) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h2 className="text-xl font-semibold text-gray-900">Create Post</h2>
@@ -99,44 +96,65 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
             className="w-full h-32 p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
             maxLength={280}
           />
-          
           <div className="flex justify-between items-center mt-3 text-sm text-gray-500">
             <span>{content.length}/280</span>
           </div>
 
-          {/* Image Selection */}
+          {/* Sample Image Selection */}
           <div className="mt-6">
             <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
               <Image className="w-4 h-4" />
-              Add an image (optional)
+              Choose a sample image (optional)
             </h4>
             <div className="grid grid-cols-2 gap-3">
-              {sampleImages.map((image, index) => (
+              {sampleImages.map((img, index) => (
                 <button
                   key={index}
-                  onClick={() => setSelectedImage(selectedImage === image ? null : image)}
+                  onClick={() => {
+                    setImage(selectedImage === img ? null : img);
+                    setCustomImageURL('');
+                  }}
                   className={`relative rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedImage === image
+                    selectedImage === img
                       ? 'border-purple-500 ring-2 ring-purple-200'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <img
-                    src={image}
-                    alt={`Option ${index + 1}`}
-                    className="w-full h-24 object-cover"
-                  />
-                  {selectedImage === image && (
-                    <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
-                      <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  )}
+                  <img src={img} alt={`Option ${index + 1}`} className="w-full h-24 object-cover" />
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Custom Image URL input */}
+          <div className="mt-6">
+            <label className="block text-sm text-gray-700 mb-1">
+              Or paste image URL manually:
+            </label>
+            <input
+              type="text"
+              value={customImageURL}
+              onChange={(e) => {
+                setCustomImageURL(e.target.value);
+                setImage(null);
+              }}
+              placeholder="https://example.com/image.jpg"
+              className="w-full p-2 border rounded-md text-sm bg-white/70"
+            />
+          </div>
+
+          {/* Image Preview */}
+          {(selectedImage || customImageURL) && (
+            <div className="mt-4">
+              <label className="text-sm text-gray-700 mb-1 block">Preview</label>
+              <img
+                src={selectedImage || customImageURL}
+                alt="Post preview"
+                className="w-full max-h-60 rounded-md object-cover shadow"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -146,7 +164,6 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
               <Smile className="w-5 h-5" />
             </button>
           </div>
-          
           <button
             onClick={handlePost}
             disabled={!content.trim() || isPosting}
