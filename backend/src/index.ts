@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes';
 import feedRoutes from './routes/feed.routes';
 import postRoutes from './routes/post.routes';
 import userRoutes from './routes/user.routes';
+import 'dotenv/config';
 
 dotenv.config();
 
