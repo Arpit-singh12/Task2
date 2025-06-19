@@ -8,6 +8,7 @@ import { createClient } from 'redis';
 import authRoutes from './routes/auth.routes';
 import feedRoutes from './routes/feed.routes';
 import postRoutes from './routes/post.routes';
+import userRoutes from './routes/user.routes';
 
 dotenv.config();
 
@@ -41,6 +42,9 @@ app.use('/api/posts', postRoutes);
 
 // routes for the stored social celeb feed...
 app.use('/api/feed', feedRoutes);
+
+//route for celebrities follow feature...
+app.use('/api/users', userRoutes);
 
 
 

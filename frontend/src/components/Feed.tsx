@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PostCard } from './PostCard';
 import { useApp } from '../contexts/AppContext';
-import { mockPosts } from '../data/mockData';
 import { Post } from '../types';
 import { Sparkles, TrendingUp } from 'lucide-react';
+import API from '../api/axios';
 
 interface FeedProps {
   showFollowingOnly?: boolean;
@@ -22,7 +22,7 @@ export function Feed({ showFollowingOnly = false }: FeedProps) {
     ? state.posts.filter(post => state.following.includes(post.authorId))
     : state.posts;
 
-  // Scroll progress tracking
+  // Scroll progress
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.pageYOffset;
@@ -37,36 +37,35 @@ export function Feed({ showFollowingOnly = false }: FeedProps) {
 
   const loadMorePosts = useCallback(async () => {
     if (loading || !hasMore) return;
-    
+
     setLoading(true);
-    
-    // Simulate API delay with smooth loading
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    
-    const startIndex = page * 10;
-    const endIndex = startIndex + 10;
-    const newPosts = mockPosts.slice(startIndex, endIndex);
-    
-    if (newPosts.length === 0) {
-      setHasMore(false);
-    } else {
-      dispatch({ type: 'LOAD_MORE_POSTS', payload: newPosts });
-      setPage(prev => prev + 1);
+    try {
+      const res = await API.get(`/posts?page=${page}&limit=10`);
+      const newPosts: Post[] = res.data.posts;
+
+      if (!newPosts || newPosts.length === 0) {
+        setHasMore(false);
+      } else {
+        dispatch({ type: 'LOAD_MORE_POSTS', payload: newPosts });
+        setPage(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Failed to load posts:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   }, [page, loading, hasMore, dispatch]);
 
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading) return;
     if (observerRef.current) observerRef.current.disconnect();
-    
+
     observerRef.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
         loadMorePosts();
       }
     }, { threshold: 0.1 });
-    
+
     if (node) observerRef.current.observe(node);
   }, [loading, hasMore, loadMorePosts]);
 
@@ -103,13 +102,12 @@ export function Feed({ showFollowingOnly = false }: FeedProps) {
     <div ref={feedRef} className="relative">
       {/* Scroll Progress Bar */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all duration-300 ease-out"
           style={{ width: `${scrollProgress}%` }}
         ></div>
       </div>
 
-      {/* Feed Header */}
       <div className="mb-8 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-purple-700 text-sm font-medium animate-bounce-in">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -117,7 +115,6 @@ export function Feed({ showFollowingOnly = false }: FeedProps) {
         </div>
       </div>
 
-      {/* Posts Grid */}
       <div className="space-y-8">
         {filteredPosts.map((post, index) => (
           <div
@@ -129,8 +126,7 @@ export function Feed({ showFollowingOnly = false }: FeedProps) {
           </div>
         ))}
       </div>
-      
-      {/* Loading State */}
+
       {loading && (
         <div className="flex justify-center py-12">
           <div className="flex flex-col items-center gap-4">
@@ -150,8 +146,7 @@ export function Feed({ showFollowingOnly = false }: FeedProps) {
           </div>
         </div>
       )}
-      
-      {/* End of Feed */}
+
       {!hasMore && filteredPosts.length > 0 && (
         <div className="text-center py-12">
           <div className="inline-flex flex-col items-center gap-4 p-8 bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl border border-purple-100">
@@ -166,7 +161,6 @@ export function Feed({ showFollowingOnly = false }: FeedProps) {
         </div>
       )}
 
-      {/* Floating Action Hints */}
       <div className="fixed bottom-8 right-8 flex flex-col gap-3 z-40">
         {scrollProgress > 50 && (
           <button

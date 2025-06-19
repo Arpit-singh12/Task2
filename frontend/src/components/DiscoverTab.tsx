@@ -1,23 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Users, Star, TrendingUp, Sparkles, Crown } from 'lucide-react';
+import {
+  UserPlus, Users, Star, TrendingUp, Sparkles, Crown,
+} from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { User as UserType } from '../types';
+import API from '../api/axios';
 
 export function DiscoverTab() {
   const { state, dispatch } = useApp();
-  const { user } = state.auth;
+  const { user, isAuthenticated } = state.auth;
+  const [celebrities, setCelebrities] = useState<UserType[]>([]);
   const [animatedStats, setAnimatedStats] = useState({ celebrities: 0, following: 0, suggestions: 0 });
-  
-  const celebrities = state.users.filter(u => u.role === 'celebrity');
-  const suggestedCelebrities = celebrities.filter(celeb => 
-    !state.following.includes(celeb.id) && celeb.id !== user?.id
+
+  //Fetch celebrities from backend
+  useEffect(() => {
+  const fetchCelebrities = async () => {
+    try {
+      const res = await API.get('/users/celebrities');
+      const fetchedUsers = res.data.users.map((u: any) => ({
+        ...u,
+        id: u._id, // 🔁 Convert Mongo _id → id
+      }));
+      setCelebrities(fetchedUsers);
+    } catch (err) {
+      console.error('Failed to fetch celebrities:', err);
+    }
+  };
+
+  if (isAuthenticated) fetchCelebrities();
+}, [isAuthenticated]);
+
+
+  const suggestedCelebrities = celebrities.filter(
+    (celeb) => !state.following.includes(celeb.id) && celeb.id !== user?.id
   );
 
-  // Animate stats on mount
+  // Animated Stats
   useEffect(() => {
     const targets = {
       celebrities: celebrities.length,
       following: state.following.length,
-      suggestions: suggestedCelebrities.length
+      suggestions: suggestedCelebrities.length,
     };
 
     const duration = 2000;
@@ -33,7 +56,7 @@ export function DiscoverTab() {
       setAnimatedStats({
         celebrities: Math.floor(targets.celebrities * easeOut),
         following: Math.floor(targets.following * easeOut),
-        suggestions: Math.floor(targets.suggestions * easeOut)
+        suggestions: Math.floor(targets.suggestions * easeOut),
       });
 
       if (currentStep >= steps) {
@@ -45,18 +68,30 @@ export function DiscoverTab() {
     return () => clearInterval(timer);
   }, [celebrities.length, state.following.length, suggestedCelebrities.length]);
 
-  const handleFollow = (celebrityId: string) => {
-    dispatch({ type: 'FOLLOW_USER', payload: celebrityId });
+  //Follow user...
+  const handleFollow = async (celebrityId: string) => {
+    try {
+      await API.post(`/follow/${celebrityId}`);
+      dispatch({ type: 'FOLLOW_USER', payload: celebrityId });
+    } catch (err) {
+      console.error('Failed to follow user:', err);
+    }
   };
 
-  const handleUnfollow = (celebrityId: string) => {
-    dispatch({ type: 'UNFOLLOW_USER', payload: celebrityId });
+  //Unfollow user....
+  const handleUnfollow = async (celebrityId: string) => {
+    try {
+      await API.post(`/unfollow/${celebrityId}`);
+      dispatch({ type: 'UNFOLLOW_USER', payload: celebrityId });
+    } catch (err) {
+      console.error('Failed to unfollow user:', err);
+    }
   };
 
   const formatFollowerCount = (count: number | undefined) => {
     if (!count) return '0';
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
+    if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
     return count.toString();
   };
 
@@ -90,7 +125,7 @@ export function DiscoverTab() {
             <span className="text-sm">Growing daily</span>
           </div>
         </div>
-        
+
         <div className="card-3d bg-gradient-to-br from-blue-500 to-cyan-500 text-white p-6 rounded-3xl animate-slide-in-left stagger-2">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
@@ -106,7 +141,7 @@ export function DiscoverTab() {
             <span className="text-sm">Your connections</span>
           </div>
         </div>
-        
+
         <div className="card-3d bg-gradient-to-br from-green-500 to-emerald-500 text-white p-6 rounded-3xl animate-slide-in-left stagger-3">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
@@ -132,15 +167,15 @@ export function DiscoverTab() {
             <h2 className="text-xl font-semibold text-gray-900">Featured Celebrities</h2>
           </div>
         </div>
-        
+
         <div className="divide-y divide-gray-100">
           {celebrities.map((celebrity, index) => {
             const isFollowing = state.following.includes(celebrity.id);
             const isOwnProfile = celebrity.id === user?.id;
-            
+
             return (
-              <div 
-                key={celebrity.id} 
+              <div
+                key={celebrity.id}
                 className="p-6 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in group"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
@@ -160,7 +195,7 @@ export function DiscoverTab() {
                       <Star className="w-3 h-3 text-white fill-current" />
                     </div>
                   </div>
-                  
+
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
@@ -170,7 +205,9 @@ export function DiscoverTab() {
                     </div>
                     <p className="text-gray-500 mb-3 text-lg">@{celebrity.username}</p>
                     {celebrity.bio && (
-                      <p className="text-gray-600 mb-4 line-clamp-2 leading-relaxed">{celebrity.bio}</p>
+                      <p className="text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+                        {celebrity.bio}
+                      </p>
                     )}
                     <div className="flex items-center gap-6 text-sm">
                       <div className="flex items-center gap-2 text-gray-500">
@@ -186,11 +223,15 @@ export function DiscoverTab() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     {!isOwnProfile && (
                       <button
-                        onClick={() => isFollowing ? handleUnfollow(celebrity.id) : handleFollow(celebrity.id)}
+                        onClick={() =>
+                          isFollowing
+                            ? handleUnfollow(celebrity.id)
+                            : handleFollow(celebrity.id)
+                        }
                         className={`px-8 py-3 rounded-2xl font-semibold transition-all duration-300 btn-3d ${
                           isFollowing
                             ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'

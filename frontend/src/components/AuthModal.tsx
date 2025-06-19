@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useApp } from '../contexts/AppContext';
+import API from '../api/axios';
 import { X, User, Star, Sparkles, Crown } from 'lucide-react';
 import { User as UserType } from '../types';
-import { useApp } from '../contexts/AppContext';
-import { mockUsers } from '../data/mockData';
-import API from '../api/axios';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,44 +13,46 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { dispatch } = useApp();
   const [selectedRole, setSelectedRole] = useState<'celebrity' | 'public'>('public');
   const [isLoading, setIsLoading] = useState(false);
-  
-  const celebrities = mockUsers.filter(user => user.role === 'celebrity');
-  const publicUsers = mockUsers.filter(user => user.role === 'public');
+  const [userList, setUserList] = useState<UserType[]>([]);
 
-   // getting mock user details.....for login..
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await API.get('/users');
+        setUserList(res.data);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        const fallback = JSON.parse(localStorage.getItem('newUsers') || '[]');
+        setUserList(fallback);
+      }
+    };
 
-  // const handleLogin = async (user: UserType) => {
-  //   setIsLoading(true);
-    
-  //   // Simulate authentication delay
-  //   await new Promise(resolve => setTimeout(resolve, 1500));
-    
-  //   dispatch({ type: 'LOGIN', payload: user });
-  //   setIsLoading(false);
-  //   onClose();
-  // };
+    if (isOpen) fetchUsers();
+  }, [isOpen]);
 
-  // getting real mock login for all user wihtout with same pass..
+  const celebrities = userList.filter(user => user.role === 'celebrity');
+  const publicUsers = userList.filter(user => user.role === 'public');
+
   const handleLogin = async (user: UserType) => {
-  setIsLoading(true);
+    setIsLoading(true);
+    try {
+      const res = await API.post('/auth/login', {
+        username: user.username,
+        password: '123456',
+      });
 
-  try {
-    const res = await API.post('/auth/login', {
-      username: user.username,
-      password: '123456', // or 'defaultpass' — your hardcoded dummy password
-    });
-
-    const { token, user: loggedInUser } = res.data;
-    localStorage.setItem('token', token);
-    dispatch({ type: 'LOGIN', payload: loggedInUser });
-    onClose();
-  } catch (error) {
-    console.error('Login failed:', error);
-    alert('Login failed. Please try again.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+      const { token, user: loggedInUser } = res.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(loggedInUser));
+      dispatch({ type: 'LOGIN', payload: loggedInUser });
+      onClose();
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -108,10 +109,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <Star className="w-4 h-4 text-yellow-500" />
             Quick Login - {selectedRole === 'celebrity' ? 'Celebrity' : 'Fan'} Accounts
           </h3>
-          
+
           {(selectedRole === 'celebrity' ? celebrities : publicUsers).map((user, index) => (
             <button
-              key={user.id}
+              key={user.id || user._id || index}
               onClick={() => handleLogin(user)}
               disabled={isLoading}
               className="w-full p-4 rounded-2xl border border-gray-200 hover:border-purple-300 bg-white/50 hover:bg-white/80 transition-all duration-300 text-left group btn-3d animate-slide-in-left disabled:opacity-50 disabled:cursor-not-allowed"
@@ -144,16 +145,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     <div className="text-xs text-gray-400 line-clamp-1">{user.bio}</div>
                   )}
                 </div>
-                {user.role === 'celebrity' && user.followerCount && (
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">
-                      {user.followerCount > 1000000
-                        ? `${(user.followerCount / 1000000).toFixed(1)}M`
-                        : `${Math.floor(user.followerCount / 1000)}K`}
-                    </div>
-                    <div className="text-xs text-gray-500">followers</div>
-                  </div>
-                )}
               </div>
             </button>
           ))}

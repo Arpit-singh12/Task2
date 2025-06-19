@@ -86,3 +86,23 @@ export const getOwnPosts = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to load your posts' });
   }
 };
+
+// Creating  route GET /api/posts?page=1&limit=10...
+export const getPosts = async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const posts = await Post.find()
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('authorId', 'id username displayName avatar role verified');
+
+    res.json({ posts });
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ message: 'Failed to fetch posts' });
+  }
+};
