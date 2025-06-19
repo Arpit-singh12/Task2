@@ -144,8 +144,19 @@ export function Feed({ showFollowingOnly = false }: FeedProps) {
 
       {/* No More Posts */}
       {!hasMore && filteredPosts.length > 0 && (
-        <div className="text-center text-sm text-gray-500 py-8">You’ve reached the end 🎉</div>
-      )}
+  <div className="text-center py-12">
+    <div className="inline-flex flex-col items-center gap-4 p-8 bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl border border-purple-100">
+      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse-glow">
+        <Sparkles className="w-8 h-8 text-white" />
+      </div>
+      <div className="text-center">
+        <h3 className="text-xl font-bold gradient-text mb-2">You're all caught up!</h3>
+        <p className="text-gray-600">You've seen all the latest posts 🎉</p>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
