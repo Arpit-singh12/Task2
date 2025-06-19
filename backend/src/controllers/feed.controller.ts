@@ -19,12 +19,12 @@ export const getFeed = async (req: Request, res: Response) => {
       .sort({ timestamp: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('authorId', 'username displayName avatar verified role bio');
+      .populate({ path: 'authorId', model: User, select: 'username displayName avatar verified role bio' });
 
     // Format for frontend...
     const formatted = posts.map(p => ({
       id: p._id,
-      authorId: p.authorId._id,
+      authorId: (p.authorId as any)._id,
       author: p.authorId,
       content: p.content,
       image: p.image,
