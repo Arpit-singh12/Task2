@@ -98,9 +98,21 @@ export const getPosts = async (req: Request, res: Response) => {
       .sort({ timestamp: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('authorId', 'id username displayName avatar role verified');
+      .populate('authorId', 'username displayName avatar verified role bio');
 
-    res.json({ posts });
+    const formatted = posts.map(p => ({
+  id: p._id,
+  authorId: p.authorId._id,
+  author: p.authorId, 
+  content: p.content,
+  image: p.image,
+  timestamp: p.timestamp,
+  likes: p.likes,
+  comments: p.comments,
+  isLiked: false, // we can update it later..
+}));
+
+    res.json({ posts: formatted });
   } catch (error) {
     console.error('Error fetching posts:', error);
     res.status(500).json({ message: 'Failed to fetch posts' });

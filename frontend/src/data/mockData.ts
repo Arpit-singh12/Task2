@@ -10,6 +10,7 @@ export const mockUsers: User[] = [
     bio: 'Academy Award winner 🏆 La La Land, Easy A, Cruella',
     followerCount: 12500000,
     verified: true,
+    _id: ''
   },
   {
     id: 'celeb-2',
@@ -20,6 +21,7 @@ export const mockUsers: User[] = [
     bio: 'Actor, Director, Musician 🎬 Blade Runner 2049, La La Land',
     followerCount: 8900000,
     verified: true,
+    _id: ''
   },
   {
     id: 'celeb-3',
@@ -30,6 +32,7 @@ export const mockUsers: User[] = [
     bio: 'Actress, Singer, Activist ✨ Spider-Man, Euphoria, Dune',
     followerCount: 18200000,
     verified: true,
+    _id: ''
   },
   {
     id: 'celeb-4',
@@ -40,6 +43,7 @@ export const mockUsers: User[] = [
     bio: 'Actor 🎭 Dune, Call Me By Your Name, Little Women',
     followerCount: 7100000,
     verified: true,
+    _id: ''
   },
   {
     id: 'public-1',
@@ -49,6 +53,7 @@ export const mockUsers: User[] = [
     avatar: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=400',
     bio: 'Movie enthusiast 🎬 Coffee lover ☕',
     followingCount: 234,
+    _id: ''
   },
   {
     id: 'public-2',
@@ -58,6 +63,7 @@ export const mockUsers: User[] = [
     avatar: 'https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=400',
     bio: 'Film critic and blogger 📝 Love indie films',
     followingCount: 89,
+    _id: ''
   },
 ];
 

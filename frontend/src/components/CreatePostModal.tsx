@@ -33,10 +33,16 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
     try {
       const res = await API.post('/posts', {
         content,
-        image,
+        image
       });
 
-      dispatch({ type: 'ADD_POST', payload: res.data });
+      dispatch({
+        type: 'ADD_POST',
+        payload: {
+          ...res.data,
+          author: state.auth.user, 
+        }
+      });
       setContent('');
       setImage(null);
       setCustomImageURL('');

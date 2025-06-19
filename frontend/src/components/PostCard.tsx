@@ -36,23 +36,20 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
 
   const handleLike = async () => {
     if (isLiking) return;
-    
+
     setIsLiking(true);
-    
-    // Add haptic feedback for mobile
+
     if ('vibrate' in navigator) {
       navigator.vibrate(50);
     }
-    
-    // Simulate network delay for better UX
+
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    if (post.isLiked) {
-      dispatch({ type: 'UNLIKE_POST', payload: post.id });
-    } else {
-      dispatch({ type: 'LIKE_POST', payload: post.id });
-    }
-    
+
+    dispatch({
+      type: post.isLiked ? 'UNLIKE_POST' : 'LIKE_POST',
+      payload: post.id,
+    });
+
     setIsLiking(false);
   };
 
@@ -75,13 +72,23 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
     return count.toString();
   };
 
+  const author = post.author;
+
+  if (!author) {
+    return (
+      <div className="p-6 border rounded-xl bg-white shadow text-gray-500">
+        <p>Post author not available</p>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={cardRef}
       className={`card-3d bg-white rounded-3xl border border-gray-100 overflow-hidden transition-all duration-500 ${
         isVisible ? 'animate-fade-in' : 'opacity-0'
       }`}
-      style={{ 
+      style={{
         animationDelay: `${index * 0.1}s`,
         transform: isVisible ? 'translateY(0)' : 'translateY(30px)'
       }}
@@ -90,19 +97,19 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
       <div className="p-6 flex items-center gap-4">
         <div className="relative">
           <img
-            src={post.author.avatar}
-            alt={post.author.displayName}
+            src={author.avatar}
+            alt={author.displayName}
             className="w-14 h-14 rounded-full object-cover ring-2 ring-purple-100 transition-all duration-300 hover:ring-4 hover:ring-purple-200"
           />
           <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-green-400 to-green-500 rounded-full border-2 border-white animate-pulse-glow"></div>
         </div>
-        
+
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-bold text-gray-900 text-lg hover:text-purple-600 transition-colors cursor-pointer">
-              {post.author.displayName}
+              {author.displayName}
             </h3>
-            {post.author.verified && (
+            {author.verified && (
               <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center animate-bounce-in">
                 <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
               </div>
@@ -110,13 +117,13 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span className="hover:text-purple-600 transition-colors cursor-pointer">
-              @{post.author.username}
+              @{author.username}
             </span>
             <span>•</span>
             <span>{formatTimeAgo(post.timestamp)}</span>
           </div>
         </div>
-        
+
         <button className="p-3 hover:bg-gray-100 rounded-full transition-all duration-300 hover:rotate-90 hover:scale-110 group">
           <MoreHorizontal className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
         </button>
@@ -125,7 +132,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
       {/* Content */}
       <div className="px-6 pb-4">
         <p className="text-gray-900 leading-relaxed mb-6 text-lg">{post.content}</p>
-        
+
         {post.image && !imageError && (
           <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 group">
             {!imageLoaded && (
@@ -159,10 +166,10 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
               } ${isLiking ? 'animate-pulse' : ''}`}
             >
               <div className="relative">
-                <Heart 
+                <Heart
                   className={`w-6 h-6 transition-all duration-300 ${
                     post.isLiked ? 'fill-current scale-110' : 'group-hover:scale-110'
-                  }`} 
+                  }`}
                 />
                 {isLiking && (
                   <div className="absolute inset-0 w-6 h-6 border-2 border-red-300 border-t-red-500 rounded-full animate-spin"></div>
@@ -170,18 +177,18 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
               </div>
               <span className="text-sm font-semibold">{formatCount(post.likes)}</span>
             </button>
-            
+
             <button className="flex items-center gap-3 text-gray-500 hover:text-blue-500 transition-all duration-300 hover:scale-110 btn-3d group">
               <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-semibold">{formatCount(post.comments)}</span>
             </button>
-            
+
             <button className="flex items-center gap-3 text-gray-500 hover:text-green-500 transition-all duration-300 hover:scale-110 btn-3d group">
               <Share className="w-6 h-6 group-hover:scale-110 group-hover:rotate-12 transition-all" />
               <span className="text-sm font-semibold">Share</span>
             </button>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-pulse"></div>
             <span className="text-xs text-gray-400">Live</span>
