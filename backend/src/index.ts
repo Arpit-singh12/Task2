@@ -26,7 +26,16 @@ const MONGO_URI = process.env.MONGO_URI || '';
 const REDIS_CHANNEL = 'new_post';
 
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // your frontend port
+  credentials: true, // important for cookies or token headers
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+//allowing preflight request...
+//app.options('*', cors());
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -42,11 +51,6 @@ app.use('/api/posts', postRoutes);
 
 // routes for the stored social celeb feed...
 app.use('/api/feed', feedRoutes);
-
-//route for celebrities follow feature...
-app.use('/api/users', userRoutes);
-
-
 
 
 //websocket connection
