@@ -88,33 +88,38 @@ export const getOwnPosts = async (req: Request, res: Response) => {
 };
 
 // Creating  route GET /api/posts?page=1&limit=10...
-export const getPosts = async (req: Request, res: Response) => {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
 
+export const getPosts = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const skip = (page - 1) * limit;
+
+  try {
     const posts = await Post.find()
       .sort({ timestamp: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('authorId', 'username displayName avatar verified role bio');
+      .populate('authorId', 'username displayName avatar verified role');
 
-    const formatted = posts.map(p => ({
-        id: p._id,
-        authorId: p.authorId._id,
-        author: p.authorId, 
-        content: p.content,
-       image: p.image,
-       timestamp: p.timestamp,
-        likes: p.likes,
-        comments: p.comments,
-        isLiked: false, // we can update it later..
-}));
+    const formatted = posts.map(p => {
+  const author = p.authorId as any; // type assertion
+  return {
+    id: p._id,
+    authorId: author._id,
+    author: author,
+    content: p.content,
+    image: p.image,
+    timestamp: p.timestamp,
+    likes: p.likes,
+    comments: p.comments,
+    isLiked: false,
+  };
+});
+
 
     res.json({ posts: formatted });
-  } catch (error) {
-    console.error('Error fetching posts:', error);
+  } catch (err) {
+    console.error('Error fetching posts:', err);
     res.status(500).json({ message: 'Failed to fetch posts' });
   }
 };
