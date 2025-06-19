@@ -101,15 +101,15 @@ export const getPosts = async (req: Request, res: Response) => {
       .populate('authorId', 'username displayName avatar verified role bio');
 
     const formatted = posts.map(p => ({
-  id: p._id,
-  authorId: p.authorId._id,
-  author: p.authorId, 
-  content: p.content,
-  image: p.image,
-  timestamp: p.timestamp,
-  likes: p.likes,
-  comments: p.comments,
-  isLiked: false, // we can update it later..
+        id: p._id,
+        authorId: p.authorId._id,
+        author: p.authorId, 
+        content: p.content,
+       image: p.image,
+       timestamp: p.timestamp,
+        likes: p.likes,
+        comments: p.comments,
+        isLiked: false, // we can update it later..
 }));
 
     res.json({ posts: formatted });
