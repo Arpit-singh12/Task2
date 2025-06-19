@@ -27,7 +27,7 @@ const REDIS_CHANNEL = 'new_post';
 
 
 app.use(cors({
-  origin: 'http://localhost:5173', // your frontend port
+  origin: process.env.FRONTEND_URL, // your frontend port
   credentials: true, // important for cookies or token headers
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
